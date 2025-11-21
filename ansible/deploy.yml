@@ -1,0 +1,48 @@
+---
+- name: Deploy backend on backend hosts in given env
+  hosts: "env_{{ env }}:&role_backend"
+  gather_facts: no
+  become: true
+  tasks:
+    - name: Wait until host is reachable via SSM
+      amazon.aws.aws_ssm:
+        operation: "command"
+        command: "echo ready"
+      register: ssm_check
+      retries: 6
+      delay: 10
+      until: ssm_check is succeeded
+
+    - name: Install packages (Amazon Linux example)
+      yum:
+        name: git,unzip
+        state: present
+
+    - name: Deploy example app (placeholder)
+      copy:
+        content: "Hello from {{ inventory_hostname }} (env={{ env }})"
+        dest: /tmp/deployed-by-ansible.txt
+
+- name: Deploy frontend on frontend hosts in given env
+  hosts: "env_{{ env }}:&role_frontend"
+  gather_facts: no
+  become: true
+  tasks:
+    - name: Wait until host is reachable via SSM
+      amazon.aws.aws_ssm:
+        operation: "command"
+        command: "echo ready"
+      register: ssm_check
+      retries: 6
+      delay: 10
+      until: ssm_check is succeeded
+
+    - name: Install nginx (example)
+      yum:
+        name: nginx
+        state: present
+
+    - name: Drop index.html (placeholder)
+      copy:
+        content: "<h1>Deployed to {{ inventory_hostname }}</h1>"
+        dest: /usr/share/nginx/html/index.html

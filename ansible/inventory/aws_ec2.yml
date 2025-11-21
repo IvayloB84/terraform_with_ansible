@@ -1,0 +1,21 @@
+plugin: amazon_ec2
+regions:
+  - "{{ lookup('env','AWS_DEFAULT_REGION') | default('eu-central-1') }}"
+filters:
+  tag:Project: "{{ lookup('env','TF_VAR_project') | default('terraform_with_ansible') }}"
+hostnames:
+  - private-ip-address
+compose:
+  ansible_host: private_ip_address
+  # instruct Ansible to use the amazon.aws SSM connection plugin for hosts discovered here
+  ansible_connection: "amazon.aws.aws_ssm"
+  # optionally set ansible_user and become method if needed
+  ansible_user: ec2-user
+keyed_groups:
+  - key: tags.Environment
+    prefix: env_
+  - key: tags.Role
+    prefix: role_
+  - key: tags.Project
+    prefix: project_
+strict: False

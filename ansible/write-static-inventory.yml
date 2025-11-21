@@ -1,0 +1,26 @@
+---
+- name: Generate static inventory from terraform output
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Run terraform output (json)
+      command: terraform output -json
+      args:
+        chdir: ../terraform
+      register: tfout
+
+    - name: Parse terraform output
+      set_fact:
+        tfdata: "{{ tfout.stdout | from_json }}"
+
+    - name: Build static inventory file
+      copy:
+        dest: ./inventory/static_inventory.ini
+        content: |
+          [backend]
+          {% for i, item in tfdata.instances.value | dict2items %}
+          {{ item.value.private_ip }} ansible_connection=amazon.aws.aws_ssm ansible_user=ec2-user
+          {% endfor %}
+
+          [all:vars]
+          ansible_python_interpreter=/usr/bin/python3
